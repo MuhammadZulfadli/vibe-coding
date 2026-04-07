@@ -3,6 +3,14 @@ import { users, sessions } from "../db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
+/**
+ * Mendaftarkan pengguna baru ke sistem.
+ * Fungsi ini mengecek apakah email sudah terdaftar, jika belum, akan melakukan hashing
+ * pada password menggunakan bcrypt dan menyimpannya ke database.
+ * 
+ * @param payload - Objek berisi { name, email, password }
+ * @returns Objek status HTTP dan data / pesan error
+ */
 export const registerUser = async ({ name, email, password }: any) => {
   try {
     // 1. Check if email already exists
@@ -33,6 +41,14 @@ export const registerUser = async ({ name, email, password }: any) => {
   }
 };
 
+/**
+ * Mengautentikasi pengguna untuk login.
+ * Fungsi ini memvalidasi keberadaan email dan mencocokkan password dengan hash di database.
+ * Jika valid, fungsi ini akan membuatkan token sesi UUID dan menyimpannya di tabel sessions.
+ * 
+ * @param credentials - Objek berisi { email, password }
+ * @returns Objek status HTTP dan rentetan token / pesan error
+ */
 export const loginUser = async ({ email, password }: any) => {
   try {
     // 1. Find user by email
@@ -72,6 +88,14 @@ export const loginUser = async ({ email, password }: any) => {
   }
 };
 
+/**
+ * Mengambil informasi detail profil pengguna berdasarkan token aktif.
+ * Fungsi ini membaca token, mencari kecocokannya di tabel sesi, lalu meretrieve 
+ * data pengguna terkait tanpa membocorkan data sensitif (password).
+ * 
+ * @param token - String token sesi UUID dari header otorisasi
+ * @returns Objek status HTTP dan profil pengguna (id, name, email, createdAt) / pesan error
+ */
 export const getCurrentUser = async (token: string) => {
   try {
     // 1. Find session by token
@@ -111,6 +135,14 @@ export const getCurrentUser = async (token: string) => {
   }
 };
 
+/**
+ * Mengakhiri sesi pengguna dengan menghapus token dari database.
+ * Fungsi ini melakukan penghapusan token dari tabel sessions secara langsung.
+ * Apabila tidak ada data yang berhasil dihapus (affectedRows === 0), kembalikan Unauthorized.
+ * 
+ * @param token - String token sesi UUID yang akan direvoke/dihapus
+ * @returns Objek status HTTP dan pesan keberhasilan "OK" / pesan error
+ */
 export const logoutUser = async (token: string) => {
   try {
     // Optimization: Directly delete and check affectedRows
