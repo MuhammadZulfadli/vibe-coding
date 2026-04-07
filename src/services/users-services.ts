@@ -71,3 +71,42 @@ export const loginUser = async ({ email, password }: any) => {
     return { status: 500, error: "Internal Server Error" };
   }
 };
+
+export const getCurrentUser = async (token: string) => {
+  try {
+    // 1. Find session by token
+    const session = await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.token, token))
+      .limit(1);
+
+    if (session.length === 0 || !session[0]) {
+      return { status: 401, error: "Unauthorized" };
+    }
+
+    const currentSession = session[0];
+
+    // 2. Find user by userId from session
+    const user = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .where(eq(users.id, currentSession.userId as number))
+      .limit(1);
+
+    if (user.length === 0 || !user[0]) {
+      return { status: 401, error: "Unauthorized" };
+    }
+
+    // 3. Success
+    return { status: 200, data: user[0] };
+  } catch (error: any) {
+    console.error("Get current user error:", error);
+    return { status: 500, error: "Internal Server Error" };
+  }
+};
