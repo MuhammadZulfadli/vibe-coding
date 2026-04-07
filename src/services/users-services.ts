@@ -110,3 +110,26 @@ export const getCurrentUser = async (token: string) => {
     return { status: 500, error: "Internal Server Error" };
   }
 };
+
+export const logoutUser = async (token: string) => {
+  try {
+    // 1. Check if session exists
+    const session = await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.token, token))
+      .limit(1);
+
+    if (session.length === 0 || !session[0]) {
+      return { status: 401, error: "Unauthorized" };
+    }
+
+    // 2. Delete session
+    await db.delete(sessions).where(eq(sessions.token, token));
+
+    return { status: 200, data: "OK" };
+  } catch (error: any) {
+    console.error("Logout error:", error);
+    return { status: 500, error: "Internal Server Error" };
+  }
+};
