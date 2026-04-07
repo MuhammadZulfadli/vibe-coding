@@ -5,6 +5,6 @@ export default defineConfig({
   out: "./drizzle",
   dialect: "mysql",
   dbCredentials: {
-    url: "mysql://root@localhost/my_database?socketPath=/run/mysqld/mysqld.sock",
+    url: "mysql://root@localhost/belajar_vibe_coding?socketPath=/run/mysqld/mysqld.sock",
   },
 });
