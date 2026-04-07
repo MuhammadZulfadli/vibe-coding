@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
-import { registerUser, loginUser, getCurrentUser, logoutUser } from "../services/users-services";
+import { registerUser, loginUser, logoutUser } from "../services/users-services";
+import { authMiddleware } from "../middlewares/auth-middleware";
 
 export const usersRoute = new Elysia({ prefix: "/api/users" })
   .post("/", async ({ body, set }) => {
@@ -27,47 +28,26 @@ export const usersRoute = new Elysia({ prefix: "/api/users" })
       password: t.String()
     })
   })
-  .get("/current", async ({ headers, set }) => {
-    const auth = headers["authorization"];
-    if (!auth || !auth.startsWith("Bearer ")) {
+  .use(authMiddleware) // Applying the dry auth middleware
+  .get("/current", async ({ isAuthorized, user, set }) => {
+    if (!isAuthorized) {
       set.status = 401;
       return { error: "Unauthorized" };
     }
 
-    const token = auth.split(" ")[1];
-    if (!token) {
-      set.status = 401;
-      return { error: "Unauthorized" };
-    }
-
-    const result = await getCurrentUser(token);
-    if (result.error) {
-      set.status = result.status;
-      return { error: result.error };
-    }
-
-    set.status = 200;
-    return { data: result.data };
+    return { data: user };
   })
-  .delete("/logout", async ({ headers, set }) => {
-    const auth = headers["authorization"];
-    if (!auth || !auth.startsWith("Bearer ")) {
+  .delete("/logout", async ({ isAuthorized, token, set }) => {
+    if (!isAuthorized) {
       set.status = 401;
       return { error: "Unauthorized" };
     }
 
-    const token = auth.split(" ")[1];
-    if (!token) {
-      set.status = 401;
-      return { error: "Unauthorized" };
-    }
-
-    const result = await logoutUser(token);
+    const result = await logoutUser(token!);
     if (result.error) {
       set.status = result.status;
       return { error: result.error };
     }
 
-    set.status = 200;
-    return { data: result.data };
+    return { data: "OK" };
   });

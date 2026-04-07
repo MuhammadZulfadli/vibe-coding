@@ -113,19 +113,13 @@ export const getCurrentUser = async (token: string) => {
 
 export const logoutUser = async (token: string) => {
   try {
-    // 1. Check if session exists
-    const session = await db
-      .select()
-      .from(sessions)
-      .where(eq(sessions.token, token))
-      .limit(1);
+    // Optimization: Directly delete and check affectedRows
+    const [result] = await db.delete(sessions).where(eq(sessions.token, token));
 
-    if (session.length === 0 || !session[0]) {
+    // result is ResultSetHeader for mysql2
+    if ((result as any).affectedRows === 0) {
       return { status: 401, error: "Unauthorized" };
     }
-
-    // 2. Delete session
-    await db.delete(sessions).where(eq(sessions.token, token));
 
     return { status: 200, data: "OK" };
   } catch (error: any) {
