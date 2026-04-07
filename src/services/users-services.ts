@@ -110,3 +110,20 @@ export const getCurrentUser = async (token: string) => {
     return { status: 500, error: "Internal Server Error" };
   }
 };
+
+export const logoutUser = async (token: string) => {
+  try {
+    // Optimization: Directly delete and check affectedRows
+    const [result] = await db.delete(sessions).where(eq(sessions.token, token));
+
+    // result is ResultSetHeader for mysql2
+    if ((result as any).affectedRows === 0) {
+      return { status: 401, error: "Unauthorized" };
+    }
+
+    return { status: 200, data: "OK" };
+  } catch (error: any) {
+    console.error("Logout error:", error);
+    return { status: 500, error: "Internal Server Error" };
+  }
+};
